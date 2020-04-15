@@ -224,24 +224,19 @@ func copyDescriptions(schema *Schema, root string, defs map[string]Definition) {
 
 		path := normalizePath(fqName)
 		if path != "" && def.Description != "" {
-			if def.Type == "group" {
-				ns := schema.Namespaces[path]
-				if ns == nil {
-					panic(fmt.Sprintf("no namespace for: %v", path))
-				}
-
+			if ns := schema.Namespaces[path]; ns != nil {
 				ns.Description = def.Description
-			} else {
-				val, ok := schema.Values[path]
-				if !ok {
-					continue
-				}
-				if val == nil {
-					panic(fmt.Sprintf("no value for: %v", path))
-				}
+			} else if def.Type == "group" {
+				panic(fmt.Sprintf("no namespace for: %v", path))
+			}
+
+			if val, ok := schema.Values[path]; ok && val != nil {
 
 				val.Description = def.Description
+			} else if def.Type != "group" {
+				panic(fmt.Sprintf("no value for: %v", path))
 			}
+
 		}
 
 		copyDescriptions(schema, fqName, def.Fields)
